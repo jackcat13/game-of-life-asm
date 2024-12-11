@@ -7,25 +7,26 @@ _start:
     mov x2, init_game_message_len
     bl print_string
     
-    ldr x13, =max_width
-    ldr x14, =max_height
+    mov x13, #32
+    mov x14, #32
 
     game_init:
         // Create game array
-        mov x0, #8 // array type: 8 bytes TODO : try to move to 4 bits everywhere
-        mul x0, x0, x13
-        mul x0, x0, x14
-        sub sp, sp, x0 // Array allocation for the grid (8 bytes per cell) in stack
+        mov x10, #8 // array type: 8 bytes TODO : try to move to 4 bits everywhere
+        mul x10, x10, x13
+        mul x10, x10, x14
+        sub sp, sp, x10 // Array allocation for the grid (8 bytes per cell) in stack
         mov x20, sp
         
         // Init values of array
-        mov x3, #0 // counter
+        mov x17, #0 // counter
         array_init_loop:
-            mov x1, #1
-            str x1, [x20, x3]
+            mov x8, #1
+            str x8, [x20, x17]
         
-        add x3, x3, #4
-        cmp x3, x0
+        // While counter < max_width * max_height * size   
+        add x17, x17, #8
+        cmp x17, x10
         b.lt array_init_loop
     
     adr x1, init_game_done_message
@@ -39,20 +40,15 @@ _start:
             mov x2, clear_screen_len
             bl print_string
             
-            mov x3, #0 // x
-            mov x4, #0 // y
+            mov x17, #0 // x
+            mov x18, #0 // y
+            mov x19, #0 // counter
             
             display_loop_y:
                 display_loop_x:
                     // Check if block should be printed by getting array element at good position
-                    mov x9, #8
-                    mov x6, x3
-                    mul x6, x6, x9 // x * 8
-                    mov x7, x4
-                    mul x7, x7, x13 // y * max_width to resolve next line
-                    mul x7, x7, x9 // * 8
-                    add x6, x6, x7 // x + processedY
-                    ldr x11, [x20, x6] // Get array element
+                    ldr x11, [x20, x19] // Get array element
+                    add x19, x19, #8 // Increment counter
                     cmp x11, #1
                     b.eq print_block
                     
@@ -72,9 +68,11 @@ _start:
                         bl print_string
                         
                 // while x < max_width
-                add x3, x3, #1
-                cmp x3, x13
+                add x17, x17, #1
+                cmp x17, x13
                 b.lt display_loop_x
+                
+                mov x17, 0
                 
                 // Display new line
                 adr x1, new_line
@@ -82,12 +80,12 @@ _start:
                 bl print_string
                 
             // while y < max_height
-            add x4, x4, #1
-            cmp x4, x14
+            add x18, x18, #1
+            cmp x18, x14
             b.lt display_loop_y
     
     
-        // Wait for 100ms
+        // Wait for 1s
         sub sp, sp, #16 // 16 bytes (8 bytes for tv_sec, 8 bytes for tv_nsec)
         mov x0, #1
         str x0, [sp] // tv_sec
@@ -117,8 +115,8 @@ print_string:
     
 // Static variables
 
-max_width: .word 50
-max_height: .word 50
+max_width: .word 32
+max_height: .word 32
 
 block: .ascii "❂"
 block_len = . - block
