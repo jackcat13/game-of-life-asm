@@ -86,16 +86,8 @@ _start:
     
     
         // Wait for 1s
-        sub sp, sp, #16 // 16 bytes (8 bytes for tv_sec, 8 bytes for tv_nsec)
         mov x0, #1
-        str x0, [sp] // tv_sec
-        mov x0, #0 // nanosec
-        str x0, [sp, #8] // tv_nsec
-        mov x0, sp // Pointer to timespec struct
-        mov x1, #0 // NULL pointer for remaining time$
-        mov x16, #340 // syscall number for nanosleep
-        svc #0x80
-        add sp, sp, #16 // Restore stack pointer to deallocate timespec struct
+        bl _sleep
             
     // while true        
     b game_loop
