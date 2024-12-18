@@ -1,5 +1,7 @@
 .global _start
 .global print_string
+.extern _sleep
+.extern _time
 .align 2
 
 _start:
@@ -9,10 +11,11 @@ _start:
     
     mov x13, #32
     mov x14, #32
+    mov x25, #4211 // Seed for RNG
 
     game_init:
         // Create game array
-        mov x10, #8 // array type: 8 bytes TODO : try to move to 4 bits everywhere
+        mov x10, #8 // array type: 8 bytes TODO : try to move to 4 bytes everywhere
         mul x10, x10, x13
         mul x10, x10, x14
         sub sp, sp, x10 // Array allocation for the grid (8 bytes per cell) in stack
@@ -21,8 +24,15 @@ _start:
         // Init values of array
         mov x17, #0 // counter
         array_init_loop:
-            mov x8, #1
-            str x8, [x20, x17]
+            // Xorshift RNG using x25 as seed and store in array mod 2
+            mov x0, x25
+            bl xorshift
+            mov x25, x0
+            mov x7, #4
+            udiv x2, x0, x7
+            mul x3, x2, x7
+            sub x0, x0, x3 // Now x0 contains the result of x0 % 4
+            str x0, [x20, x17]
         
         // While counter < max_width * max_height * size   
         add x17, x17, #8
@@ -104,6 +114,19 @@ print_string:
     svc #0x80
     ret
 
+//params : x0 : seed, return x0 : random number
+xorshift:
+    mov x1, #21
+    mov x2, #35
+    mov x3, #4
+    mov x4, x0
+    lsl x0, x0, x1
+    eor x0, x0, x4
+    lsr x4, x0, x2
+    eor x0, x0, x4
+    lsl x4, x0, x3
+    eor x0, x0, x4
+    ret
     
 // Static variables
 
