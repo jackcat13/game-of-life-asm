@@ -9,17 +9,19 @@ _start:
     mov x2, init_game_message_len
     bl print_string
     
-    mov x13, #32
-    mov x14, #32
-    mov x25, #4211 // Seed for RNG
+    mov x13, #100
+    mov x14, #20
+    mov x25, #129 // Seed for RNG
 
     game_init:
         // Create game array
-        mov x10, #8 // array type: 8 bytes TODO : try to move to 4 bytes everywhere
+        mov x10, #8 // array type: 8 bytes
         mul x10, x10, x13
         mul x10, x10, x14
         sub sp, sp, x10 // Array allocation for the grid (8 bytes per cell) in stack
         mov x20, sp
+        sub sp, sp, x10 // Array allocation for the grid for next generation(8 bytes per cell) in stack
+        mov x15, sp
         
         // Init values of array
         mov x17, #0 // counter
@@ -28,11 +30,12 @@ _start:
             mov x0, x25
             bl xorshift
             mov x25, x0
-            mov x7, #4
+            mov x7, #2
             udiv x2, x0, x7
             mul x3, x2, x7
-            sub x0, x0, x3 // Now x0 contains the result of x0 % 4
+            sub x0, x0, x3 // Now x0 contains the result of x0 % 2
             str x0, [x20, x17]
+            str x0, [x15, x17]
         
         // While counter < max_width * max_height * size   
         add x17, x17, #8
@@ -58,7 +61,6 @@ _start:
                 display_loop_x:
                     // Check if block should be printed by getting array element at good position
                     ldr x11, [x20, x19] // Get array element
-                    add x19, x19, #8 // Increment counter
                     cmp x11, #1
                     b.eq print_block
                     
@@ -77,6 +79,7 @@ _start:
                     print_current:
                         bl print_string
                         
+                    add x19, x19, #8 // Increment counter
                 // while x < max_width
                 add x17, x17, #1
                 cmp x17, x13
@@ -98,6 +101,217 @@ _start:
         // Wait for 1s
         mov x0, #1
         bl _sleep
+        
+        // To check if each cell is alive or dead
+        game_round:
+            mov x17, #0 // x
+            mov x18, #0 // y
+            mov x19, #0 // counter
+            mov x21, #0 // alive neighbours counter
+            
+            round_loop_y:
+                round_loop_x:
+                    mov x21, #0 // alive neighbours counter
+                    
+                    // -1, -1
+                    check_x_minus_y_minus:
+                        sub x22, x17, #1
+                        sub x23, x18, #1
+                        cmp x22, #0
+                        b.lt check_x_y_minus
+                        cmp x23, #0
+                        b.lt check_x_y_minus
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_y_minus
+                        add x21, x21, #1
+                    
+                    // 0, -1
+                    check_x_y_minus:
+                        mov x22, x17
+                        sub x23, x18, #1
+                        cmp x23, #0
+                        b.lt check_x_plus_y_minus
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_plus_y_minus
+                        add x21, x21, #1
+                    
+                    // 1, -1
+                    check_x_plus_y_minus:
+                        add x22, x17, #1
+                        sub x23, x18, #1
+                        cmp x22, x13
+                        b.ge check_x_minus_y
+                        cmp x23, #0
+                        b.lt check_x_minus_y
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_minus_y
+                        add x21, x21, #1
+                    
+                    // -1, 0
+                    check_x_minus_y:
+                        sub x22, x17, #1
+                        mov x23, x18
+                        cmp x22, #0
+                        b.lt check_x_plus_y
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_plus_y
+                        add x21, x21, #1
+                    
+                    // 1, 0
+                    check_x_plus_y:
+                        add x22, x17, #1
+                        mov x23, x18
+                        cmp x22, x13
+                        b.ge check_x_minus_y_plus
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_minus_y_plus
+                        add x21, x21, #1
+                    
+                    // -1, 1
+                    check_x_minus_y_plus:
+                        sub x22, x17, #1
+                        add x23, x18, #1
+                        cmp x22, #0
+                        b.lt check_x_y_plus
+                        cmp x23, x14
+                        b.ge check_x_y_plus
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_y_plus
+                        add x21, x21, #1
+                    
+                    // 0, 1
+                    check_x_y_plus:
+                        mov x22, x17
+                        add x23, x18, #1
+                        cmp x23, x14
+                        b.ge check_x_plus_y_plus
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq check_x_plus_y_plus
+                        add x21, x21, #1
+                    
+                    // 1, 1
+                    check_x_plus_y_plus:
+                        add x22, x17, #1
+                        add x23, x18, #1
+                        cmp x22, x13
+                        b.ge alive_not_alive_checks
+                        cmp x23, x14
+                        b.ge alive_not_alive_checks
+                        mov x0, #8
+                        mul x22, x22, x0
+                        mul x0, x0, x13
+                        mul x23, x23, x0
+                        add x24, x22, x23
+                        ldr x27, [x20, x24]
+                        cmp x27, #0
+                        b.eq alive_not_alive_checks
+                        add x21, x21, #1
+                        
+                    alive_not_alive_checks:
+                    ldr x12, [x20, x19] // Get current cell value
+                    cmp x12, #1
+                    b.eq alive
+                    
+                    not_alive:
+                        mov x0, #3
+                        cmp x21, x0
+                        b.ne no_change
+                        mov x1, #1
+                        str x1, [x15, x19]
+                        b end_round_loop
+                    
+                    alive:
+                        mov x0, #2
+                        cmp x21, x0
+                        b.eq no_change
+                        mov x0, #3
+                        cmp x21, x0
+                        b.eq no_change
+                        mov x1, #0
+                        str x1, [x15, x19]
+                        b end_round_loop
+                        
+                    no_change:
+                    end_round_loop:
+                        add x19, x19, #8 // Increment counter
+                        
+                // while x < max_width
+                add x17, x17, #1
+                cmp x17, x13
+                b.lt round_loop_x
+                
+            mov x17, 0
+            
+            // while y < max_height
+            add x18, x18, #1
+            cmp x18, x14
+            b.lt round_loop_y
+            
+        // To apply round modifications
+        game_round_apply:
+            mov x17, #0 // x
+            mov x18, #0 // y
+            mov x19, #0 // counter
+            
+            round_loop_apply_y:
+                round_loop_apply_x:
+                    ldr x11, [x15, x19] // Get array element of next generation
+                    str x11, [x20, x19] // Copy value to original array
+                
+                    add x19, x19, #8 // Increment counter
+                // while x < max_width
+                add x17, x17, #1
+                cmp x17, x13
+                b.lt round_loop_apply_x
+            
+            mov x17, 0
+            
+            // while y < max_height
+            add x18, x18, #1
+            cmp x18, x14
+            b.lt round_loop_apply_y
             
     // while true        
     b game_loop
@@ -133,7 +347,7 @@ xorshift:
 max_width: .word 32
 max_height: .word 32
 
-block: .ascii "❂"
+block: .ascii "〇"
 block_len = . - block
 empty: .ascii " "
 empty_len = . - empty
@@ -148,3 +362,5 @@ init_game_done_message_len = . - init_game_done_message
 clear_screen_msg:
     .asciz "\033[2J\033[H"          // Clear screen and move cursor to top-left
 clear_screen_len = . - clear_screen_msg
+
+format_string: .asciz "Value: %d\n"  // Format string for printing integers
