@@ -1,6 +1,6 @@
 .global _start
 .global print_string
-.extern _sleep
+.extern _nanosleep
 .extern _time
 .align 2
 
@@ -11,7 +11,7 @@ _start:
     
     mov x13, #100
     mov x14, #20
-    mov x25, #129 // Seed for RNG
+    mov x25, #130 // Seed for RNG
 
     game_init:
         // Create game array
@@ -98,9 +98,22 @@ _start:
             b.lt display_loop_y
     
     
-        // Wait for 1s
-        mov x0, #1
-        bl _sleep
+        // Allocate timespec structure on the stack
+        sub sp, sp, #16           // Reserve 16 bytes for `struct timespec`
+        mov x0, sp                // Load address of timespec into x0
+    
+        // Set up timespec for 1 second (1s = 1,000,000,000ns)
+        mov x1, #0                // set tv_sec
+        str x1, [x0, #0]          // Store tv_sec at offset 0
+        ldr x1, =100000000                // set tv_nsec
+        str x1, [x0, #8]          // Store tv_nsec at offset 8
+    
+        // Call nanosleep
+        mov x1, #0                // Set rmtp to NULL (no remaining time)
+        bl _nanosleep             // Call nanosleep(struct timespec*, NULL)
+    
+        // Restore stack
+        add sp, sp, #16           // Deallocate timespec structure
         
         // To check if each cell is alive or dead
         game_round:
@@ -347,7 +360,7 @@ xorshift:
 max_width: .word 32
 max_height: .word 32
 
-block: .ascii "〇"
+block: .ascii "█"
 block_len = . - block
 empty: .ascii " "
 empty_len = . - empty
