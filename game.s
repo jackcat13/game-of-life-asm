@@ -134,12 +134,7 @@ _start:
                         b.lt check_x_y_minus
                         cmp x23, #0
                         b.lt check_x_y_minus
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_y_minus
                         add x21, x21, #1
@@ -150,12 +145,7 @@ _start:
                         sub x23, x18, #1
                         cmp x23, #0
                         b.lt check_x_plus_y_minus
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_plus_y_minus
                         add x21, x21, #1
@@ -168,12 +158,7 @@ _start:
                         b.ge check_x_minus_y
                         cmp x23, #0
                         b.lt check_x_minus_y
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_minus_y
                         add x21, x21, #1
@@ -184,12 +169,7 @@ _start:
                         mov x23, x18
                         cmp x22, #0
                         b.lt check_x_plus_y
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_plus_y
                         add x21, x21, #1
@@ -200,12 +180,7 @@ _start:
                         mov x23, x18
                         cmp x22, x13
                         b.ge check_x_minus_y_plus
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_minus_y_plus
                         add x21, x21, #1
@@ -218,12 +193,7 @@ _start:
                         b.lt check_x_y_plus
                         cmp x23, x14
                         b.ge check_x_y_plus
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_y_plus
                         add x21, x21, #1
@@ -234,12 +204,7 @@ _start:
                         add x23, x18, #1
                         cmp x23, x14
                         b.ge check_x_plus_y_plus
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq check_x_plus_y_plus
                         add x21, x21, #1
@@ -252,12 +217,7 @@ _start:
                         b.ge alive_not_alive_checks
                         cmp x23, x14
                         b.ge alive_not_alive_checks
-                        mov x0, #8
-                        mul x22, x22, x0
-                        mul x0, x0, x13
-                        mul x23, x23, x0
-                        add x24, x22, x23
-                        ldr x27, [x20, x24]
+                        bl resolve_table_value
                         cmp x27, #0
                         b.eq alive_not_alive_checks
                         add x21, x21, #1
@@ -353,6 +313,15 @@ xorshift:
     eor x0, x0, x4
     lsl x4, x0, x3
     eor x0, x0, x4
+    ret
+    
+resolve_table_value:
+    mov x0, #8
+    mul x22, x22, x0
+    mul x0, x0, x13
+    mul x23, x23, x0
+    add x24, x22, x23
+    ldr x27, [x20, x24]
     ret
     
 // Static variables
