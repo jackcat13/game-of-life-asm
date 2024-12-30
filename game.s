@@ -1,17 +1,30 @@
 .global _start
 .global print_string
+.extern _atoi
 .extern _nanosleep
 .extern _time
 .align 2
 
 _start:
-    adr x1, init_game_message
-    mov x2, init_game_message_len
-    bl print_string
-    
-    mov x13, #100
-    mov x14, #20
     mov x25, #130 // Seed for RNG
+    arguments_parsing:
+        mov x2, x0 // argc in x2
+        mov x3, x1 // argv in x3
+        
+        cmp x2, #2 // Meaning only 1 argument provided
+        b.ne init
+        
+        ldr x0, [x3, #8] // Get first argument
+        bl _atoi
+        mov x25, x0 // Change seed because of argument
+
+    init:
+        adr x1, init_game_message
+        mov x2, init_game_message_len
+        bl print_string
+        
+        mov x13, #100
+        mov x14, #20
 
     game_init:
         // Create game array

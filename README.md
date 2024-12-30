@@ -18,3 +18,15 @@ Pre-requisites : `make` and `as` commands should be available in your terminal.
 Following is an execution example of the game in the terminal :
 
 https://github.com/user-attachments/assets/06753c86-a9d9-4b62-8b69-86bcb3b25b99
+
+# Different generations
+
+It is possible to change the initial state of the game by passing a single argument to the program (needs to be an int) :
+
+```bash
+./target/game 212
+```
+
+In this case, 212 is the seed used by the random generator. 
+
+Note : If anything else than a single argument is provided, default seed will be used.
