@@ -1,8 +1,9 @@
 .global _start
-.global print_string
+.extern print_string
 .extern _atoi
 .extern _nanosleep
 .extern _time
+.extern xorshift
 .align 2
 
 _start:
@@ -306,27 +307,6 @@ _start:
     mov x0, #0
     mov x16, #1
     svc #0x80
-
-// params : adr x1 : message address; mov x2 : message length
-print_string:
-    mov x0, #1
-    mov x16, #4
-    svc #0x80
-    ret
-
-//params : x0 : seed, return x0 : random number
-xorshift:
-    mov x1, #21
-    mov x2, #35
-    mov x3, #4
-    mov x4, x0
-    lsl x0, x0, x1
-    eor x0, x0, x4
-    lsr x4, x0, x2
-    eor x0, x0, x4
-    lsl x4, x0, x3
-    eor x0, x0, x4
-    ret
     
 resolve_table_value:
     mov x0, #8
